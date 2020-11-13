@@ -80,12 +80,12 @@ func testAccVultrSnapshotConfigBasic(rServerLabel, desc string) string {
 	return fmt.Sprintf(`
 		resource "vultr_server" "snap" {
        	label = "%s"
-       	region = "ewr"
-       	plan = "vc2-1c-1gb"
+       	region_id = "1"
+       	plan_id = 201
        	os_id = 147
    	}
 		resource "vultr_snapshot" "foo" {
-			instance_id  = "${vultr_server.snap.id}"
+			instance_id       = "${vultr_server.snap.id}"
 			description  = "%s"
 		}
 	`, rServerLabel, desc)

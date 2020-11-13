@@ -5,7 +5,7 @@
 [![codecov](https://codecov.io/gh/vultr/govultr/branch/master/graph/badge.svg?token=PDJXBc7Rci)](https://codecov.io/gh/vultr/govultr)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vultr/govultr)](https://goreportcard.com/report/github.com/vultr/govultr)
 
-The official Vultr Go client - GoVultr allows you to interact with the Vultr V2 API.
+The official Vultr Go client - GoVultr allows you to interact with the Vultr V1 API.
 
 ## Installation
 
@@ -18,7 +18,13 @@ go get -u github.com/vultr/govultr
 Vultr uses a PAT (Personal Access token) to interact/authenticate with the APIs. An API Key can be generated and acquired from the API menu in [settings](https://my.vultr.com/settings/#settingsapi).
 
 To instantiate a govultr client you invoke `NewClient()`.
-You will also have to pass in your `PAT` to a `oauth2` library to create an `*http.Client` which will configure `Authorization` header with your PAT as `bearer api-key`.
+
+This takes in two parameters:
+
+- \*http.Client
+- API Key
+
+You can define your own `http.Client` however if you pass in `nil` then you will be defaulted to use `http.DefaultClient`. For the API key, we recommend you store this as a environment variable and not hard code it.
 
 There are also three optional parameters you may change regarding the client:
 
@@ -39,9 +45,7 @@ import (
 func main() {
 	apiKey := os.Getenv("VultrAPIKey")
 
-	config := &oauth2.Config{}
-	ts := config.TokenSource(ctx, &oauth2.Token{AccessToken: apiKey})
-	vultrClient := govultr.NewClient(oauth2.NewClient(ctx,ts))
+	vultrClient := govultr.NewClient(nil, apiKey)
 
 	// Optional changes
 	_ = vultrClient.SetBaseURL("https://api.vultr.com")
@@ -55,7 +59,7 @@ func main() {
 Create a VPS
 
 ```go
-instanceOptions := &govultr.InstanceReq{
+vpsOptions := &govultr.InstanceReq{
 	Label:                "awesome-go-app",
 	Hostname:             "awesome-go.com",
 	Backups:              true,
@@ -65,7 +69,7 @@ instanceOptions := &govultr.InstanceReq{
 	Region:               "ewr",
 }
 
-res, err := vultrClient.Instance.Create(context.Background(), instanceOptions)
+res, err := vultrClient.Instance.Create(context.Background(), vpsOptions)
 
 if err != nil {
 	fmt.Println(err)

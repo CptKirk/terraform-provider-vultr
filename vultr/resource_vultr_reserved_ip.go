@@ -59,10 +59,9 @@ func resourceVultrReservedIPCreate(d *schema.ResourceData, meta interface{}) err
 	client := meta.(*Client).govultrClient()
 
 	req := &govultr.ReservedIPReq{
-		Region:     d.Get("region").(string),
-		IPType:     d.Get("ip_type").(string),
-		Label:      d.Get("label").(string),
-		InstanceID: d.Get("instance_id").(string),
+		Region: d.Get("region").(string),
+		IPType: d.Get("ip_type").(string),
+		Label:  d.Get("label").(string),
 	}
 	rip, err := client.ReservedIP.Create(context.Background(), req)
 	if err != nil {
@@ -73,8 +72,11 @@ func resourceVultrReservedIPCreate(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[INFO] Reserved IP ID: %s", d.Id())
 
 	if a, attachedOK := d.GetOk("instance_id"); attachedOK {
-		if err := client.ReservedIP.Attach(context.Background(), d.Id(), a.(string)); err != nil {
-			return fmt.Errorf("error attaching reserved IP: %v %v", d.Id(), a.(string))
+		req := &govultr.ReservedIPReq{
+			InstanceID: a.(string),
+		}
+		if err := client.ReservedIP.Attach(context.Background(), d.Id(), req); err != nil {
+			return fmt.Errorf("error attaching reserved IP: %v", err)
 		}
 	}
 
@@ -95,7 +97,7 @@ func resourceVultrReservedIPRead(d *schema.ResourceData, meta interface{}) error
 		return nil
 	}
 
-	d.Set("region", rip.ID)
+	d.Set("region_id", rip.ID)
 	d.Set("ip_type", rip.IPType)
 	d.Set("subnet", rip.Subnet)
 	d.Set("subnet_size", rip.SubnetSize)
@@ -119,7 +121,10 @@ func resourceVultrReservedIPUpdate(d *schema.ResourceData, meta interface{}) err
 			}
 		}
 		if newVal.(string) != "" {
-			if err := client.ReservedIP.Attach(context.Background(), d.Id(), newVal.(string)); err != nil {
+			req := &govultr.ReservedIPReq{
+				InstanceID: newVal.(string),
+			}
+			if err := client.ReservedIP.Attach(context.Background(), d.Id(), req); err != nil {
 				return fmt.Errorf("error attaching Reserved IP (%s): %v", d.Id(), err)
 			}
 		}

@@ -17,8 +17,8 @@ Create a new Snapshot
 ```hcl
 resource "vultr_server" "my_server" {
     label = "my_server"
-    region = "ewr"
-    plan = 201
+    region_id = "1"
+    plan_id = 201
     os_id = 147
 }
 resource "vultr_snapshot" "my_snapshot" {

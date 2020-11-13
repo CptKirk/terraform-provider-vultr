@@ -38,7 +38,7 @@ The `filter` block supports the following:
 
 The following attributes are exported:
 
-* `id` - The ID of the backup
+* `BACKUPID` - The ID of the backup
 * `description` - The description of the backup.
 * `size` - The size of the backup in bytes.
 * `status` - The status of the backup.

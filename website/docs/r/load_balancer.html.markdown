@@ -16,7 +16,7 @@ Create a new load balancer:
 
 ```hcl
 resource "vultr_load_balancer" "lb" {
-  region = "ewr"
+  region_id = 1
   label     = "terraform lb example"
   balancing_algorithm = "roundrobin"
 
@@ -43,10 +43,10 @@ resource "vultr_load_balancer" "lb" {
 
 The follow arguments are supported:
 
-* `region` - (Required) The region your load balancer is deployed in.
+* `region_id` - (Required) The region your load balancer is deployed in.
 * `forwarding_rules` - (Required) List of forwarding rules for a load balancer. The configuration of a `forwarding_rules` is listened below.
-* `label` - (Optional) The load balancer's label.
-* `balancing_algorithm` - (Optional) The balancing algorithm for your load balancer. Options are `roundrobin` or `leastconn`. Default value is `roundrobin`
+* `label` - (Optional) The load balancers label.
+* `balancing_algorithm` - (Optional) The balancing algorithm for your load balancer. Options are `roundrobin` or `leastconn`
 * `proxy_protocol` - (Optional) Boolean value that indicates if Proxy Protocol is enabled.
 * `cookie_name` - (Optional) Name for your given sticky session.
 * `ssl_redirect` - (Optional) Boolean value that indicates if HTTP calls will be redirected to HTTPS.
@@ -69,7 +69,7 @@ The follow arguments are supported:
 * `frontend_protocol` - (Required) Protocol on load balancer side. Possible values: "http", "https", "tcp".
 * `frontend_port` - (Required) Port on load balancer side.
 * `backend_protocol` - (Required) Protocol on instance side. Possible values: "http", "https", "tcp".
-* `backend_port` - (Required) Port on instance side.
+* `target_port` - (Required) Port on instance side.
 
 `ssl` supports the following
 
@@ -81,8 +81,8 @@ The follow arguments are supported:
 
 The following attributes are exported:
 * `id` - The load balancer ID.
-* `region` - The region your load balancer is deployed in.
-* `label` - The load balancer's label.
+* `region_id` - The region your load balancer is deployed in.
+* `label` - The load balancers label.
 * `balancing_algorithm` - The balancing algorithm for your load balancer.
 * `proxy_protocol` - Boolean value that indicates if Proxy Protocol is enabled.
 * `cookie_name` - Name for your given sticky session.

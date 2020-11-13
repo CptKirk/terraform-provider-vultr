@@ -11,8 +11,8 @@ import (
 // ISOService is the interface to interact with the ISO endpoints on the Vultr API
 type ISOService interface {
 	Create(ctx context.Context, isoReq *ISOReq) (*ISO, error)
-	Get(ctx context.Context, isoID string) (*ISO, error)
-	Delete(ctx context.Context, isoID string) error
+	Get(ctx context.Context, isoID int) (*ISO, error)
+	Delete(ctx context.Context, isoID int) error
 	List(ctx context.Context, options *ListOptions) ([]ISO, *Meta, error)
 	ListPublic(ctx context.Context, options *ListOptions) ([]PublicISO, *Meta, error)
 }
@@ -24,7 +24,7 @@ type ISOServiceHandler struct {
 
 // ISO represents ISOs currently available on this account.
 type ISO struct {
-	ID          string `json:"id"`
+	ID          int    `json:"id"`
 	DateCreated string `json:"date_created"`
 	FileName    string `json:"filename"`
 	Size        int    `json:"size,omitempty"`
@@ -35,10 +35,9 @@ type ISO struct {
 
 // PublicISO represents public ISOs offered in the Vultr ISO library.
 type PublicISO struct {
-	ID          string `json:"id"`
+	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	MD5Sum      string `json:"md5sum,omitempty"`
 }
 
 // ISOReq
@@ -77,8 +76,8 @@ func (i *ISOServiceHandler) Create(ctx context.Context, isoReq *ISOReq) (*ISO, e
 }
 
 // Get an ISO
-func (i *ISOServiceHandler) Get(ctx context.Context, isoID string) (*ISO, error) {
-	uri := fmt.Sprintf("/v2/iso/%s", isoID)
+func (i *ISOServiceHandler) Get(ctx context.Context, isoID int) (*ISO, error) {
+	uri := fmt.Sprintf("/v2/iso/%d", isoID)
 
 	req, err := i.Client.NewRequest(ctx, http.MethodGet, uri, nil)
 	if err != nil {
@@ -93,8 +92,8 @@ func (i *ISOServiceHandler) Get(ctx context.Context, isoID string) (*ISO, error)
 }
 
 // Delete will delete an ISO image from your account
-func (i *ISOServiceHandler) Delete(ctx context.Context, isoID string) error {
-	uri := fmt.Sprintf("/v2/iso/%s", isoID)
+func (i *ISOServiceHandler) Delete(ctx context.Context, isoID int) error {
+	uri := fmt.Sprintf("/v2/iso/%d", isoID)
 
 	req, err := i.Client.NewRequest(ctx, http.MethodDelete, uri, nil)
 	if err != nil {

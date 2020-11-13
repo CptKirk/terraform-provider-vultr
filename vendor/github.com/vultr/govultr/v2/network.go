@@ -8,13 +8,13 @@ import (
 	"github.com/google/go-querystring/query"
 )
 
-const netPath = "/v2/private-networks"
+const netPath = "/v2/networks"
 
 // NetworkService is the interface to interact with the network endpoints on the Vultr API
 type NetworkService interface {
 	Create(ctx context.Context, createReq *NetworkReq) (*Network, error)
 	Get(ctx context.Context, networkID string) (*Network, error)
-	Update(ctx context.Context, networkID string, description string) error
+	Update(ctx context.Context, networkID string, updateReq *NetworkReq) error
 	Delete(ctx context.Context, networkID string) error
 	List(ctx context.Context, options *ListOptions) ([]Network, *Meta, error)
 }
@@ -83,11 +83,9 @@ func (n *NetworkServiceHandler) Get(ctx context.Context, networkID string) (*Net
 }
 
 // Update updates a private network
-func (n *NetworkServiceHandler) Update(ctx context.Context, networkID string, description string) error {
+func (n *NetworkServiceHandler) Update(ctx context.Context, networkID string, updateReq *NetworkReq) error {
 	uri := fmt.Sprintf("%s/%s", netPath, networkID)
-
-	netReq := RequestBody{"description": description}
-	req, err := n.client.NewRequest(ctx, http.MethodPut, uri, netReq)
+	req, err := n.client.NewRequest(ctx, http.MethodPut, uri, updateReq)
 	if err != nil {
 		return err
 	}

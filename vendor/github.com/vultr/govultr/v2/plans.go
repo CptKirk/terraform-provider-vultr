@@ -29,7 +29,7 @@ type BareMetalPlan struct {
 	Bandwidth   int      `json:"bandwidth"`
 	MonthlyCost int      `json:"monthly_cost"`
 	Type        string   `json:"type"`
-	Locations   []string `json:"locations"`
+	Locations   []Region `json:"locations"`
 }
 
 // Plans represents vc2, vdc, or vhf
@@ -39,9 +39,9 @@ type Plan struct {
 	Ram         int      `json:"ram"`
 	Disk        int      `json:"disk"`
 	Bandwidth   int      `json:"bandwidth"`
-	MonthlyCost int      `json:"monthly_cost"`
+	MonthlyCost string   `json:"monthly_cost"`
 	Type        string   `json:"type"`
-	Locations   []string `json:"locations"`
+	Locations   []Region `json:"locations"`
 }
 
 type plansBase struct {
@@ -50,7 +50,7 @@ type plansBase struct {
 }
 
 type bareMetalPlansBase struct {
-	Plans []BareMetalPlan `json:"plans_metal"`
+	Plans []BareMetalPlan `json:"plans"`
 	Meta  *Meta           `json:"meta"`
 }
 

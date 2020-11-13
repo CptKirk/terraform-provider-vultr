@@ -14,6 +14,10 @@ func dataSourceVultrBareMetalPlan() *schema.Resource {
 		Read: dataSourceVultrBareMetalPlanRead,
 		Schema: map[string]*schema.Schema{
 			"filter": dataSourceFiltersSchema(),
+			"name": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"cpu_count": {
 				Type:     schema.TypeInt,
 				Computed: true,

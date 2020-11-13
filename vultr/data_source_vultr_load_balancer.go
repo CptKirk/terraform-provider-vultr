@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vultr/govultr/v2"
+	"strconv"
 )
 
 func dataSourceVultrLoadBalancer() *schema.Resource {
@@ -42,10 +41,6 @@ func dataSourceVultrLoadBalancer() *schema.Resource {
 			},
 			"health_check": {
 				Type:     schema.TypeMap,
-				Computed: true,
-			},
-			"has_ssl": {
-				Type:     schema.TypeBool,
 				Computed: true,
 			},
 			"ssl": {

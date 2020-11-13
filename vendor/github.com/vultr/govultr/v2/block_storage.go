@@ -12,14 +12,15 @@ type RequestBody map[string]interface{}
 
 // BlockStorageService is the interface to interact with Block-Storage endpoint on the Vultr API
 type BlockStorageService interface {
-	Create(ctx context.Context, blockReq *BlockStorageCreate) (*BlockStorage, error)
+	Create(ctx context.Context, blockReq *BlockStorageReq) (*BlockStorage, error)
 	Get(ctx context.Context, blockID string) (*BlockStorage, error)
-	Update(ctx context.Context, blockID string, blockReq *BlockStorageUpdate) error
+	Update(ctx context.Context, blockID string, label string) error
 	Delete(ctx context.Context, blockID string) error
 	List(ctx context.Context, options *ListOptions) ([]BlockStorage, *Meta, error)
 
-	Attach(ctx context.Context, blockID string, attach *BlockStorageAttach) error
-	Detach(ctx context.Context, blockID string, detach *BlockStorageDetach) error
+	Attach(ctx context.Context, blockID, instanceID string, liveAttach string) error
+	Detach(ctx context.Context, blockID string, liveDetach string) error
+	Resize(ctx context.Context, blockID string, sizeGB int) error
 }
 
 // BlockStorageServiceHandler handles interaction with the block-storage methods for the Vultr API
@@ -29,38 +30,21 @@ type BlockStorageServiceHandler struct {
 
 // BlockStorage represents Vultr Block-Storage
 type BlockStorage struct {
-	ID                 string  `json:"id"`
-	Cost               float32 `json:"cost"`
-	Status             string  `json:"status"`
-	SizeGB             int     `json:"size_gb"`
-	Region             string  `json:"region"`
-	DateCreated        string  `json:"date_created"`
-	AttachedToInstance string  `json:"attached_to_instance"`
-	Label              string  `json:"label"`
+	ID                 string `json:"id"`
+	Cost               int    `json:"cost"`
+	Status             string `json:"status"`
+	SizeGB             int    `json:"size_gb"`
+	Region             string `json:"region"`
+	DateCreated        string `json:"date_created"`
+	AttachedToInstance string `json:"attached_to_instance"`
+	Label              string `json:"label"`
 }
 
 // BlockStorageReq
-type BlockStorageCreate struct {
+type BlockStorageReq struct {
 	Region string `json:"region"`
 	SizeGB int    `json:"size_gb"`
 	Label  string `json:"label,omitempty"`
-}
-
-// BlockStorageUpdate
-type BlockStorageUpdate struct {
-	SizeGB int    `json:"size_gb,omitempty"`
-	Label  string `json:"label,omitempty"`
-}
-
-// BlockStorageAttach
-type BlockStorageAttach struct {
-	InstanceID string `json:"instance_id"`
-	Live       bool   `json:"live,omitempty"`
-}
-
-// BlockStorageDetach
-type BlockStorageDetach struct {
-	Live bool `json:"live,omitempty"`
 }
 
 type blockStoragesBase struct {
@@ -73,7 +57,7 @@ type blockStorageBase struct {
 }
 
 // Create builds out a block storage
-func (b *BlockStorageServiceHandler) Create(ctx context.Context, blockReq *BlockStorageCreate) (*BlockStorage, error) {
+func (b *BlockStorageServiceHandler) Create(ctx context.Context, blockReq *BlockStorageReq) (*BlockStorage, error) {
 	uri := "/v2/blocks"
 
 	req, err := b.client.NewRequest(ctx, http.MethodPost, uri, blockReq)
@@ -107,10 +91,10 @@ func (b *BlockStorageServiceHandler) Get(ctx context.Context, blockID string) (*
 }
 
 // SetLabel allows you to set/update the label on your Vultr Block storage
-func (b *BlockStorageServiceHandler) Update(ctx context.Context, blockID string, blockReq *BlockStorageUpdate) error {
+func (b *BlockStorageServiceHandler) Update(ctx context.Context, blockID string, label string) error {
 	uri := fmt.Sprintf("/v2/blocks/%s", blockID)
-
-	req, err := b.client.NewRequest(ctx, http.MethodPatch, uri, blockReq)
+	put := &RequestBody{"label": label}
+	req, err := b.client.NewRequest(ctx, http.MethodPatch, uri, put)
 	if err != nil {
 		return err
 	}
@@ -162,12 +146,21 @@ func (b *BlockStorageServiceHandler) List(ctx context.Context, options *ListOpti
 	return blocks.Blocks, blocks.Meta, nil
 }
 
-// Attach will link a given block storage to a given Vultr instance
-// If Live is set to true the block storage will be attached without reloading the instance
-func (b *BlockStorageServiceHandler) Attach(ctx context.Context, blockID string, attach *BlockStorageAttach) error {
+// Attach will link a given block storage to a given Vultr vps
+// If liveAttach is set to "yes" the block storage will be attached without reloading the instance
+func (b *BlockStorageServiceHandler) Attach(ctx context.Context, blockID, instanceID string, liveAttach string) error {
 	uri := fmt.Sprintf("/v2/blocks/%s/attach", blockID)
 
-	req, err := b.client.NewRequest(ctx, http.MethodPost, uri, attach)
+	t := make(map[string]interface{})
+	t["instance_id"] = instanceID
+	if liveAttach == "yes" {
+		t["live"] = liveAttach
+	}
+
+	updates := RequestBody{}
+	updates = t
+
+	req, err := b.client.NewRequest(ctx, http.MethodPost, uri, updates)
 	if err != nil {
 		return err
 	}
@@ -179,12 +172,38 @@ func (b *BlockStorageServiceHandler) Attach(ctx context.Context, blockID string,
 	return nil
 }
 
+//
 // Detach will de-link a given block storage to the Vultr instance it is attached to
-// If Live is set to true the block storage will be detached without reloading the instance
-func (b *BlockStorageServiceHandler) Detach(ctx context.Context, blockID string, detach *BlockStorageDetach) error {
+// If liveDetach is set to "yes" the block storage will be detached without reloading the instance
+func (b *BlockStorageServiceHandler) Detach(ctx context.Context, blockID string, liveDetach string) error {
 	uri := fmt.Sprintf("/v2/blocks/%s/detach", blockID)
 
-	req, err := b.client.NewRequest(ctx, http.MethodPost, uri, detach)
+	t := make(map[string]interface{})
+	if liveDetach == "yes" {
+		t["live"] = liveDetach
+	}
+
+	updates := RequestBody{}
+	updates = t
+
+	req, err := b.client.NewRequest(ctx, http.MethodPost, uri, updates)
+	if err != nil {
+		return err
+	}
+
+	if err = b.client.DoWithContext(ctx, req, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Resize allows you to resize your Vultr block storage
+func (b *BlockStorageServiceHandler) Resize(ctx context.Context, blockID string, sizeGB int) error {
+	uri := fmt.Sprintf("/v2/blocks/%s/resize", blockID)
+	body := &RequestBody{"size_gb": sizeGB}
+
+	req, err := b.client.NewRequest(ctx, http.MethodPost, uri, body)
 	if err != nil {
 		return err
 	}

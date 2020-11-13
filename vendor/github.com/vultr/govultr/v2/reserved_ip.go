@@ -17,8 +17,8 @@ type ReservedIPService interface {
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, options *ListOptions) ([]ReservedIP, *Meta, error)
 
-	Convert(ctx context.Context, ripConvert *ReservedIPConvertReq) (*ReservedIP, error)
-	Attach(ctx context.Context, id, instance string) error
+	Convert(ctx context.Context, ripConvert *ReservedIPReq) (*ReservedIP, error)
+	Attach(ctx context.Context, id string, ripAttach *ReservedIPReq) error
 	Detach(ctx context.Context, id string) error
 }
 
@@ -54,11 +54,6 @@ type reservedIPsBase struct {
 
 type reservedIPBase struct {
 	ReservedIP *ReservedIP `json:"reserved_ip"`
-}
-
-type ReservedIPConvertReq struct {
-	IPAddress string `json:"ip_address,omitempty"`
-	Label     string `json:"label,omitempty"`
 }
 
 // Create adds the specified reserved IP to your Vultr account
@@ -130,7 +125,7 @@ func (r *ReservedIPServiceHandler) List(ctx context.Context, options *ListOption
 }
 
 // Convert an existing IP on a subscription to a reserved IP.
-func (r *ReservedIPServiceHandler) Convert(ctx context.Context, ripConvert *ReservedIPConvertReq) (*ReservedIP, error) {
+func (r *ReservedIPServiceHandler) Convert(ctx context.Context, ripConvert *ReservedIPReq) (*ReservedIP, error) {
 	uri := fmt.Sprintf("%s/convert", ripPath)
 	req, err := r.client.NewRequest(ctx, http.MethodPost, uri, ripConvert)
 
@@ -147,9 +142,9 @@ func (r *ReservedIPServiceHandler) Convert(ctx context.Context, ripConvert *Rese
 }
 
 // Attach a reserved IP to an existing subscription
-func (r *ReservedIPServiceHandler) Attach(ctx context.Context, id, instance string) error {
+func (r *ReservedIPServiceHandler) Attach(ctx context.Context, id string, ripAttach *ReservedIPReq) error {
 	uri := fmt.Sprintf("%s/%s/attach", ripPath, id)
-	req, err := r.client.NewRequest(ctx, http.MethodPost, uri, instance)
+	req, err := r.client.NewRequest(ctx, http.MethodPost, uri, ripAttach)
 	if err != nil {
 		return err
 	}

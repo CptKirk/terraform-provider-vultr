@@ -219,6 +219,7 @@ func resourceVultrLoadBalancerCreate(d *schema.ResourceData, meta interface{}) e
 	cookieName, cookieOk := d.GetOk("cookie_name")
 	stickySessions := &govultr.StickySessions{}
 	if cookieOk {
+		stickySessions.StickySessionsEnabled = "on"
 		stickySessions.CookieName = cookieName.(string)
 	} else {
 		stickySessions = nil
@@ -325,6 +326,7 @@ func resourceVultrLoadBalancerUpdate(d *schema.ResourceData, meta interface{}) e
 	if d.HasChange("health_check") {
 		health := d.Get("health_check")
 		req.HealthCheck = generateHealthCheck(health)
+
 	}
 
 	if d.HasChange("ssl") {
@@ -372,6 +374,7 @@ func resourceVultrLoadBalancerUpdate(d *schema.ResourceData, meta interface{}) e
 		stickySessions := &govultr.StickySessions{}
 		cookieName := d.Get("cookie_name")
 
+		stickySessions.StickySessionsEnabled = "on"
 		stickySessions.CookieName = cookieName.(string)
 		req.StickySessions = stickySessions
 	}
