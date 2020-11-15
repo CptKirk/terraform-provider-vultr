@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -23,18 +24,22 @@ func dataSourceVultrDnsDomain() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"dnssec_info": {
+				Type:        schema.TypeList,
+				Description: "test",
+				Computed:    true,
+				Elem:        schema.TypeMap,
+			},
 		},
 	}
 }
 
 func dataSourceVultrDnsDomainRead(d *schema.ResourceData, meta interface{}) error {
-
 	client := meta.(*Client).govultrClient()
 
 	domain := d.Get("domain").(string)
 
 	dnsDomains, err := client.DNSDomain.List(context.Background())
-
 	if err != nil {
 		return fmt.Errorf("error getting dns domains: %v", err)
 	}
@@ -42,10 +47,8 @@ func dataSourceVultrDnsDomainRead(d *schema.ResourceData, meta interface{}) erro
 	dnsList := []govultr.DNSDomain{}
 
 	for _, d := range dnsDomains {
-
 		if d.Domain == domain {
 			dnsList = append(dnsList, d)
-
 		}
 	}
 
@@ -59,5 +62,32 @@ func dataSourceVultrDnsDomainRead(d *schema.ResourceData, meta interface{}) erro
 
 	d.SetId(dnsDomains[0].Domain)
 	d.Set("date_created", dnsDomains[0].DateCreated)
+
+	dnssecInfo, err := client.DNSDomain.DNSSecInfo(context.Background(), domain)
+	if err != nil {
+		return fmt.Errorf("error getting dnssec info: %v", err)
+	}
+
+	result := make([]map[string]string, 0)
+
+	for _, member := range dnssecInfo {
+		main := strings.Split(member, ";")
+		mainSplitted := strings.Split(main[0], " ")
+
+		if mainSplitted[5] == "1" || mainSplitted[5] == "2" {
+			dnssecMap := make(map[string]string, 4)
+			dnssecMap["keyTag"] = mainSplitted[3]
+			dnssecMap["algorithm"] = mainSplitted[4]
+			dnssecMap["digestType"] = mainSplitted[5]
+			dnssecMap["digest"] = mainSplitted[6]
+
+			result = append(result, dnssecMap)
+		} else {
+			continue
+		}
+	}
+
+	d.Set("dnssec_info", result)
+
 	return nil
 }

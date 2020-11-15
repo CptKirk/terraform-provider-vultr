@@ -3,12 +3,13 @@ package vultr
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/vultr/govultr"
 	"log"
 	"net"
 	"strconv"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/vultr/govultr"
 )
 
 func resourceVultrDnsDomain() *schema.Resource {
@@ -30,6 +31,10 @@ func resourceVultrDnsDomain() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			"dnssec": {
+				Type:     schema.TypeBool,
+				Optional: true,
 			},
 		},
 	}
@@ -54,6 +59,11 @@ func resourceVultrDnsDomainCreate(d *schema.ResourceData, meta interface{}) erro
 	err := client.DNSDomain.Create(context.Background(), domain, ip.(string))
 	if err != nil {
 		return fmt.Errorf("error while creating DNS domain : %s", err)
+	}
+
+	err = client.DNSDomain.ToggleDNSSec(context.Background(), domain, d.Get("dnssec").(bool))
+	if err != nil {
+		return fmt.Errorf("error while creating dnssec records : %s", err)
 	}
 
 	d.Set("server_ip", ip)
@@ -84,7 +94,6 @@ func resourceVultrDnsDomainRead(d *schema.ResourceData, meta interface{}) error 
 	client := meta.(*Client).govultrClient()
 
 	domains, err := client.DNSDomain.List(context.Background())
-
 	if err != nil {
 		return fmt.Errorf("error getting domains : %v", err)
 	}
@@ -113,7 +122,6 @@ func resourceVultrDnsDomainDelete(d *schema.ResourceData, meta interface{}) erro
 
 	log.Printf("[INFO] Deleting DNS domain (%s)", d.Id())
 	err := client.DNSDomain.Delete(context.Background(), d.Id())
-
 	if err != nil {
 		return fmt.Errorf("error destroying DNS domain %s: %v", d.Id(), err)
 	}
